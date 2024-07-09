@@ -28,12 +28,13 @@ API service defined based on requirements listed in https://gist.github.com/d3hi
 
 Expected errors:
 - `/api/register`: Invalid/unknown emails for teacher/students, duplicate registration
-- `/api/suspend`: Invalid/unknown emails
-- `/api/
+- `/api/suspend`: Invalid/unknown student emails
+- `/api/commonstudents`: Missing/invalid/unknown teacher emails
+- `/api/retrievefornotifications`: Invalid/unknown teacher email
 
 Additional endpoints:
 - `/api/unsuspend`: Unsuspend with the same behaviour
-- `/api/unregister`: Unregister. Unlike register, unregister ignores duplication of unregistration.
+- `/api/unregister`: Unregister. Unlike register, unregister ignores unregistering already unregistered students.
 
 ## Installation
 

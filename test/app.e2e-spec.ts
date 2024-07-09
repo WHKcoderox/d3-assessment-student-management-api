@@ -107,8 +107,8 @@ describe('AppController (e2e)', () => {
       return request(app.getHttpServer())
         .post('/api/register')
         .send({
-          teacher: 't1@test.com',
-          students: ['s1@test.com', 's2@test.com'],
+          teacher: teachers[0].email,
+          students: [students[0].email, students[1].email],
         })
         .set('Content-Type', 'application/json')
         .expect(204);
@@ -117,7 +117,7 @@ describe('AppController (e2e)', () => {
     it('Fails registration when student emails are not found', () => {
       return request(app.getHttpServer())
         .post('/api/register')
-        .send({ teacher: 't1@test.com', students: ['s0@test.com'] })
+        .send({ teacher: teachers[0].email, students: ['s0@test.com'] })
         .set('Content-Type', 'application/json')
         .expect(400)
         .then((response) => expect(response.body).toHaveProperty('message'));
@@ -126,7 +126,7 @@ describe('AppController (e2e)', () => {
     it('Fails registration when teacher emails are not found', () => {
       return request(app.getHttpServer())
         .post('/api/register')
-        .send({ teacher: 't0@test.com', students: ['s1@test.com'] })
+        .send({ teacher: 't0@test.com', students: [students[0].email] })
         .set('Content-Type', 'application/json')
         .expect(400)
         .then((response) => expect(response.body).toHaveProperty('message'));
@@ -135,7 +135,7 @@ describe('AppController (e2e)', () => {
     it('Fails registration when registration is duplicated', () => {
       return request(app.getHttpServer())
         .post('/api/register')
-        .send({ teacher: 't2@test.com', students: ['s1@test.com'] })
+        .send({ teacher: teachers[1].email, students: [students[0].email] })
         .set('Content-Type', 'application/json')
         .expect(400)
         .then((response) => expect(response.body).toHaveProperty('message'));
@@ -147,8 +147,8 @@ describe('AppController (e2e)', () => {
       return request(app.getHttpServer())
         .post('/api/unregister')
         .send({
-          teacher: 't2@test.com',
-          students: ['s1@test.com', 's2@test.com'],
+          teacher: teachers[1].email,
+          students: [students[0].email, students[1].email],
         })
         .set('Content-Type', 'application/json')
         .expect(204);
@@ -157,7 +157,7 @@ describe('AppController (e2e)', () => {
     it('Ignores unregistration duplication', () => {
       return request(app.getHttpServer())
         .post('/api/unregister')
-        .send({ teacher: 't1@test.com', students: ['s1@test.com'] })
+        .send({ teacher: teachers[0].email, students: [students[0].email] })
         .set('Content-Type', 'application/json')
         .expect(204);
     });
@@ -165,7 +165,7 @@ describe('AppController (e2e)', () => {
     it('Fails unregistration when student emails are not found', () => {
       return request(app.getHttpServer())
         .post('/api/unregister')
-        .send({ teacher: 't1@test.com', students: ['s0@test.com'] })
+        .send({ teacher: teachers[0].email, students: ['s0@test.com'] })
         .set('Content-Type', 'application/json')
         .expect(400)
         .then((response) => expect(response.body).toHaveProperty('message'));
@@ -174,7 +174,7 @@ describe('AppController (e2e)', () => {
     it('Fails unregistration when teacher emails are not found', () => {
       return request(app.getHttpServer())
         .post('/api/unregister')
-        .send({ teacher: 't0@test.com', students: ['s1@test.com'] })
+        .send({ teacher: 't0@test.com', students: [students[0].email] })
         .set('Content-Type', 'application/json')
         .expect(400)
         .then((response) => expect(response.body).toHaveProperty('message'));
@@ -241,7 +241,7 @@ describe('AppController (e2e)', () => {
     it('Successfully suspends student', () => {
       return request(app.getHttpServer())
         .post('/api/suspend')
-        .send({ student: ['s2@test.com'] })
+        .send({ student: [students[1].email] })
         .set('Content-Type', 'application/json')
         .expect(204);
     });
@@ -262,7 +262,7 @@ describe('AppController (e2e)', () => {
     it('Successfully unsuspends student', () => {
       return request(app.getHttpServer())
         .post('/api/unsuspend')
-        .send({ student: ['s5@test.com'] })
+        .send({ student: [students[4].email] })
         .set('Content-Type', 'application/json')
         .expect(204);
     });
@@ -283,7 +283,7 @@ describe('AppController (e2e)', () => {
     it('Retrieves list of registered students', () => {
       return request(app.getHttpServer())
         .post('/api/retrievefornotifications')
-        .send({ teacher: 't2@test.com', notification: '' })
+        .send({ teacher: teachers[1].email, notification: '' })
         .set('Content-Type', 'application/json')
         .expect(200)
         .then((response) => {
@@ -299,7 +299,7 @@ describe('AppController (e2e)', () => {
       return request(app.getHttpServer())
         .post('/api/retrievefornotifications')
         .send({
-          teacher: 't1@test.com',
+          teacher: teachers[0].email,
           notification: 'blabla @s1@test.com,@s2@test.com',
         })
         .set('Content-Type', 'application/json')
@@ -316,7 +316,7 @@ describe('AppController (e2e)', () => {
       return request(app.getHttpServer())
         .post('/api/retrievefornotifications')
         .send({
-          teacher: 't2@test.com',
+          teacher: teachers[1].email,
           notification: 'blabla @s4@test.com,@s2@test.com',
         })
         .set('Content-Type', 'application/json')
@@ -335,7 +335,7 @@ describe('AppController (e2e)', () => {
       return request(app.getHttpServer())
         .post('/api/retrievefornotifications')
         .send({
-          teacher: 't1@test.com',
+          teacher: teachers[0].email,
           notification: 'blabla @s5@test.com',
         })
         .set('Content-Type', 'application/json')
@@ -358,6 +358,86 @@ describe('AppController (e2e)', () => {
         .then((response) => {
           expect(response.body).toHaveProperty('message');
         });
+    });
+  });
+
+  describe('Side-effect tests', () => {
+    it('Registering students allows them to retrieve notifications', async () => {
+      await request(app.getHttpServer())
+      .post('/api/retrievefornotifications')
+      .send({
+        teacher: teachers[0].email,
+        notification: '',
+      })
+      .set('Content-Type', 'application/json')
+      .expect(200)
+      .then((response) => {
+        expect(response.body).toHaveProperty('recipients');
+        expect(response.body['recipients']).toHaveLength(0);
+      });
+
+      await request(app.getHttpServer())
+      .post('/api/register')
+      .send({
+        teacher: teachers[0].email,
+        students: [students[0].email, students[1].email],
+      })
+      .set('Content-Type', 'application/json')
+      .expect(204);
+
+      return request(app.getHttpServer())
+      .post('/api/retrievefornotifications')
+      .send({
+        teacher: teachers[0].email,
+        notification: '',
+      })
+      .set('Content-Type', 'application/json')
+      .expect(200)
+      .then((response) => {
+        expect(response.body).toHaveProperty('recipients');
+        expect(response.body['recipients']).toHaveLength(2);
+        expect(response.body['recipients']).toContain(students[0].email);
+        expect(response.body['recipients']).toContain(students[1].email);
+      });
+    });
+
+    it('Suspending students makes them unable to retrieve notifications', async () => {
+      await request(app.getHttpServer())
+      .post('/api/retrievefornotifications')
+      .send({
+        teacher: teachers[2].email,
+        notification: '',
+      })
+      .set('Content-Type', 'application/json')
+      .expect(200)
+      .then((response) => {
+        expect(response.body).toHaveProperty('recipients');
+        expect(response.body['recipients']).toHaveLength(2);
+        expect(response.body['recipients']).toContain(students[0].email);
+        expect(response.body['recipients']).toContain(students[1].email);
+      });
+
+      await request(app.getHttpServer())
+      .post('/api/suspend')
+      .send({
+        student: students[0].email,
+      })
+      .set('Content-Type', 'application/json')
+      .expect(204);
+
+      return request(app.getHttpServer())
+      .post('/api/retrievefornotifications')
+      .send({
+        teacher: teachers[2].email,
+        notification: '',
+      })
+      .set('Content-Type', 'application/json')
+      .expect(200)
+      .then((response) => {
+        expect(response.body).toHaveProperty('recipients');
+        expect(response.body['recipients']).toHaveLength(1);
+        expect(response.body['recipients']).toContain(students[1].email);
+      });
     });
   });
 });

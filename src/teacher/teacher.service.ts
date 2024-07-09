@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Teacher } from './teacher.entity';
 import { DataSource } from 'typeorm';
 import { InjectDataSource } from '@nestjs/typeorm';
+import { Student } from '../student/student.entity';
 
 @Injectable()
 export class TeacherService {
@@ -13,10 +14,10 @@ export class TeacherService {
   // Obtains a list of student emails registered to queried teachers.
   async studentsRegisteredToTeachers(
     teacherEmails: string[],
-  ): Promise<string[]> {
+  ): Promise<Student[]> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
-    const acc: string[][] = teacherEmails.map(() => []);
+    const acc: Student[][] = teacherEmails.map(() => []);
     try {
       // assumption: not an excessive number of teachers (>10) is typically queried
       await Promise.all(
@@ -29,12 +30,11 @@ export class TeacherService {
             .createQueryBuilder()
             .relation(Teacher, 'students')
             .of(teacher)
-            .loadMany()
-            .then((students) => students.map((student) => student.email));
+            .loadMany();
         }),
       );
       for (let i = 1; i < acc.length; i++) {
-        acc[0] = acc[0].filter((email) => acc[i].includes(email));
+        acc[0] = acc[0].filter((student) => acc[i].some(student2 => student.email === student2.email));
       }
       return acc[0];
     } catch (e) {

@@ -77,7 +77,7 @@ export class StudentService {
     }
   }
 
-  async getStudentsMentioned(notification: string): Promise<string[]> {
+  async getStudentsMentioned(notification: string): Promise<Student[]> {
     const matches = [];
     const regex = emailRegexSafe();
     let match;
@@ -104,9 +104,6 @@ export class StudentService {
     } finally {
       await queryRunner.release();
     }
-    // filter out suspended students
-    return studentsFound
-      .filter((student) => !student.suspended)
-      .map((student) => student.email);
+    return studentsFound;
   }
 }

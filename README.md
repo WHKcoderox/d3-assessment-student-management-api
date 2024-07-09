@@ -26,7 +26,14 @@
 
 API service defined based on requirements listed in https://gist.github.com/d3hiring/4d1415d445033d316c36a56f0953f4ef.
 
-Supported: 
+Expected errors:
+- `/api/register`: Invalid/unknown emails for teacher/students, duplicate registration
+- `/api/suspend`: Invalid/unknown emails
+- `/api/
+
+Additional endpoints:
+- `/api/unsuspend`: Unsuspend with the same behaviour
+- `/api/unregister`: Unregister. Unlike register, unregister ignores duplication of unregistration.
 
 ## Installation
 
@@ -48,6 +55,8 @@ $ npm run start:prod
 ```
 
 ## Test
+
+Due to the nature of the API endpoints, only end-to-end testing was done both for individual features and for testing endpoints with side-effects.
 
 ```bash
 # e2e tests

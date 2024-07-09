@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { StudentService } from '../student/student.service';
 import { TeacherService } from '../teacher/teacher.service';
+import { Student } from '../student/student.entity';
 
 @Injectable()
 export class ApiService {
@@ -24,7 +25,7 @@ export class ApiService {
   async findCommonStudents(teacherEmails: string[]): Promise<string[]> {
     return await this.teacherService.studentsRegisteredToTeachers(
       teacherEmails,
-    );
+    ).then(students => students.map(student => student.email));
   }
 
   async suspendStudent(student: string) {
@@ -39,8 +40,8 @@ export class ApiService {
     teacher: string,
     notification: string,
   ): Promise<string[]> {
-    let students1: string[] = [];
-    let students2: string[] = [];
+    let students1: Student[] = [];
+    let students2: Student[] = [];
     await Promise.all([
       (async () => {
         students1 =
@@ -52,7 +53,10 @@ export class ApiService {
         ]);
       })(),
     ]);
-    // return union
-    return Array.from(new Set([...students1, ...students2]));
+    let filtered = students1
+      .concat(students2)
+      .filter(student => !student.suspended)
+      .map(student => student.email);
+    return Array.from(new Set([...filtered]));
   }
 }

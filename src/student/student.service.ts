@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { Student } from './student.entity';
-import { ArrayContains, DataSource } from 'typeorm';
+import { DataSource, In } from 'typeorm';
+const emailRegexSafe = require('email-regex-safe');
 
 @Injectable()
 export class StudentService {
@@ -37,7 +38,7 @@ export class StudentService {
     try {
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      // since update does not 
+      // since update does not check if the student exists, manually add one more query
       let validStudent = await queryRunner.manager
         .getRepository(Student)
         .exists({where: {email: student}});
@@ -56,5 +57,38 @@ export class StudentService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  async getStudentsMentioned(notification: string): Promise<string[]> {
+    let matches = [];
+    const regex = emailRegexSafe();
+    let match;
+    // for all emails, get the @ mentions
+    while ((match = regex.exec(notification)) !== null) {
+      if (notification[regex.lastIndex - match[0].length - 1] === '@') {
+        // email with @ sign
+        matches.push(match[0]);
+      }
+    }
+    
+    let studentsFound: Student[];
+    const queryRunner = this.dataSource.createQueryRunner();
+    try {
+      await queryRunner.connect();
+      studentsFound = await queryRunner.manager
+        .getRepository(Student)
+        .find({where: {email: In(matches)}});
+    } catch(e) {
+      console.log(e);
+      throw new BadRequestException({
+        'message': 'Failed to retrieve students. Check that the database is correctly configured.'
+      });
+    } finally {
+      await queryRunner.release();
+    }
+    // filter out suspended students
+    return studentsFound
+      .filter(student => !student.suspended)
+      .map(student => student.email);
   }
 }

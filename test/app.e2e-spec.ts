@@ -194,26 +194,84 @@ describe('AppController (e2e)', () => {
           expect(response.body).toHaveProperty('message');
         });
     });
+  });
 
-    describe('/api/suspend (POST)', () => {
-      it('Successfully suspends student', () => {
-        return request(app.getHttpServer())
-          .post('/api/suspend')
-          .send({ student: ['s2@test.com'] })
-          .set('Content-Type', 'application/json')
-          .expect(204)
-      });
+  describe('/api/suspend (POST)', () => {
+    it('Successfully suspends student', () => {
+      return request(app.getHttpServer())
+        .post('/api/suspend')
+        .send({ student: ['s2@test.com'] })
+        .set('Content-Type', 'application/json')
+        .expect(204)
+    });
 
-      it('Fails to suspend nonexistent student', () => {
-        return request(app.getHttpServer())
-          .post('/api/suspend')
-          .send({ student: ['s0@test.com'] })
-          .set('Content-Type', 'application/json')
-          .expect(400)
-          .then(response => {
-            expect(response.body).toHaveProperty('message');
-          });
-      });
+    it('Fails to suspend nonexistent student', () => {
+      return request(app.getHttpServer())
+        .post('/api/suspend')
+        .send({ student: ['s0@test.com'] })
+        .set('Content-Type', 'application/json')
+        .expect(400)
+        .then(response => {
+          expect(response.body).toHaveProperty('message');
+        });
+    });
+  });
+  
+  describe('/api/retrievefornotifications (POST)', () => {
+    it('Retrieves list of registered students', () => {
+      return request(app.getHttpServer())
+        .post('/api/retrievefornotifications')
+        .send({ teacher: 't2@test.com', notification: '' })
+        .set('Content-Type', 'application/json')
+        .expect(200)
+        .then(response => {
+          expect(response.body).toHaveProperty('recipients');
+          expect(response.body['recipients']).toHaveLength(3);
+          expect(response.body['recipients']).toContain(students[0].email);
+          expect(response.body['recipients']).toContain(students[1].email);
+          expect(response.body['recipients']).toContain(students[2].email);
+        });
+    });
+
+    it('Retrieves list of mentioned students', () => {
+      return request(app.getHttpServer())
+        .post('/api/retrievefornotifications')
+        .send({ teacher: 't1@test.com', notification: 'blabla @s1@test.com,@s2@test.com' })
+        .set('Content-Type', 'application/json')
+        .expect(200)
+        .then(response => {
+          expect(response.body).toHaveProperty('recipients');
+          expect(response.body['recipients']).toHaveLength(2);
+          expect(response.body['recipients']).toContain(students[0].email);
+          expect(response.body['recipients']).toContain(students[1].email);
+        });
+    });
+
+    it('Retrieves distinct list of registered and mentioned students', () => {
+      return request(app.getHttpServer())
+        .post('/api/retrievefornotifications')
+        .send({ teacher: 't2@test.com', notification: 'blabla @s4@test.com,@s2@test.com' })
+        .set('Content-Type', 'application/json')
+        .expect(200)
+        .then(response => {
+          expect(response.body).toHaveProperty('recipients');
+          expect(response.body['recipients']).toHaveLength(4);
+          expect(response.body['recipients']).toContain(students[0].email);
+          expect(response.body['recipients']).toContain(students[1].email);
+          expect(response.body['recipients']).toContain(students[2].email);
+          expect(response.body['recipients']).toContain(students[3].email);
+        });
+    });
+    
+    it('Fails when invalid teacher is provided', () => {
+      return request(app.getHttpServer())
+        .post('/api/retrievefornotifications')
+        .send({ teacher: 't0@test.com', notification: 'blabla @s4@test.com,@s2@test.com' })
+        .set('Content-Type', 'application/json')
+        .expect(400)
+        .then(response => {
+          expect(response.body).toHaveProperty('message');
+        });
     });
   });
 });

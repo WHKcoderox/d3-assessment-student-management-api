@@ -5,6 +5,7 @@ import { CommonStudentsResponseDto, CommonStudentsQueryDto } from './dto/common-
 import { Request } from 'express';
 import { isArray } from 'class-validator';
 import { SuspendStudentDto } from './dto/suspend-student.dto';
+import { GetNotificationStudentsRequestDto, GetNotificationStudentsResponseDto } from './dto/get-notification-students.dto';
 
 @Controller('api')
 export class ApiController {
@@ -14,13 +15,11 @@ export class ApiController {
 
   @Post('register')
   @HttpCode(204)
-  async registerStudents(@Body() registerStudentsDto: RegisterStudentsQueryDto): Promise<string> {
+  async registerStudents(@Body() registerStudentsDto: RegisterStudentsQueryDto) {
     await this.apiService.registerStudents(
       registerStudentsDto.teacher, 
       registerStudentsDto.students
     );
-    
-    return 'Successfully registered students';
   }
 
   @Get('commonstudents')
@@ -38,5 +37,13 @@ export class ApiController {
   @HttpCode(204)
   async suspendStudent(@Body() suspendStudentDto: SuspendStudentDto) {
     await this.apiService.suspendStudent(suspendStudentDto.student);
+  }
+
+  @Post('retrievefornotifications')
+  @HttpCode(200)
+  async getStudentsToNotify(@Body() getNotificationStudentDto: GetNotificationStudentsRequestDto): Promise<GetNotificationStudentsResponseDto> {
+    let response = new GetNotificationStudentsResponseDto();
+    response.recipients = await this.apiService.getStudentsToNotify(getNotificationStudentDto.teacher, getNotificationStudentDto.notification);
+    return response;
   }
 }

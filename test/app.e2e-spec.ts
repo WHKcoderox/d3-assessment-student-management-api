@@ -14,6 +14,31 @@ describe('AppController (e2e)', () => {
   let app: INestApplication;
   let moduleFixture: TestingModule;
   let dataSource: DataSource;
+  const students: Student[] = [];
+  const teachers: Teacher[] = [];
+
+  beforeAll((done) => {
+    // Generate test data
+    StudentFactory.resetCount();
+    TeacherFactory.resetCount();
+    for (let i = 0; i < 5; i++) {
+      students.push(StudentFactory.createStudent());
+    }
+    for (let i = 0; i < 3; i++) {
+      teachers.push(TeacherFactory.createTeacher());
+    }
+
+    // register 3 students to teacher 2
+    for (let i = 0; i < 3; i++) {
+      // saving students first, so store the relation under teachers local entity
+      teachers[1].students.push(students[i]);
+    }
+    // register 2 students to teacher 3
+    for (let i = 0; i < 2; i++) {
+      teachers[2].students.push(students[i]);
+    }
+    done();
+  });
 
   beforeEach(async () => {
     moduleFixture = await Test.createTestingModule({
@@ -24,26 +49,6 @@ describe('AppController (e2e)', () => {
     dataSource = moduleFixture.get(DataSource);
     await app.init();
 
-    // generate test data
-    StudentFactory.resetCount();
-    TeacherFactory.resetCount();
-    const students: Student[] = [];
-    for (let i = 0; i < 5; i++) {
-      students.push(StudentFactory.createStudent());
-    }
-    const teachers: Teacher[] = [];
-    for (let i = 0; i < 3; i++) {
-      teachers.push(TeacherFactory.createTeacher());
-    }
-    // register 3 students to teacher 2
-    for (let i = 0; i < 3; i++) {
-      // saving students first, so store the relation under teachers local entity
-      teachers[1].students.push(students[i]);
-    }
-    // register 2 students to teacher 3
-    for (let i = 0; i < 2; i++) {
-      teachers[2].students.push(students[i]);
-    }
     // add test data
     let runner = dataSource.createQueryRunner();
     try {
@@ -64,6 +69,7 @@ describe('AppController (e2e)', () => {
     }
   });
   
+  // clear database
   afterEach(async () => {
     let runner = dataSource.createQueryRunner();
     try {
@@ -146,6 +152,9 @@ describe('AppController (e2e)', () => {
         .then(response => {
           expect(response.body).toHaveProperty('students');
           expect(response.body['students']).toHaveLength(3);
+          expect(response.body['students']).toContain(students[0].email);
+          expect(response.body['students']).toContain(students[1].email);
+          expect(response.body['students']).toContain(students[2].email);
         });
     });
 
@@ -158,6 +167,8 @@ describe('AppController (e2e)', () => {
         .then(response => {
           expect(response.body).toHaveProperty('students');
           expect(response.body['students']).toHaveLength(2);
+          expect(response.body['students']).toContain(students[0].email);
+          expect(response.body['students']).toContain(students[1].email);
         });
     });
 
@@ -173,16 +184,36 @@ describe('AppController (e2e)', () => {
         });
     });
 
-    it('Gives no students when queried teacher does not exist', () => {
+    it('Fails when queried teacher does not exist', () => {
       return request(app.getHttpServer())
         .get('/api/commonstudents?teacher=t0%40test.com')
         .send()
         .set('Content-Type', 'application/json')
-        .expect(200)
+        .expect(400)
         .then(response => {
-          expect(response.body).toHaveProperty('students');
-          expect(response.body['students']).toHaveLength(0);
+          expect(response.body).toHaveProperty('message');
         });
+    });
+
+    describe('/api/suspend (POST)', () => {
+      it('Successfully suspends student', () => {
+        return request(app.getHttpServer())
+          .post('/api/suspend')
+          .send({ student: ['s2@test.com'] })
+          .set('Content-Type', 'application/json')
+          .expect(204)
+      });
+
+      it('Fails to suspend nonexistent student', () => {
+        return request(app.getHttpServer())
+          .post('/api/suspend')
+          .send({ student: ['s0@test.com'] })
+          .set('Content-Type', 'application/json')
+          .expect(400)
+          .then(response => {
+            expect(response.body).toHaveProperty('message');
+          });
+      });
     });
   });
 });

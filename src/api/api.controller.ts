@@ -4,6 +4,7 @@ import { RegisterStudentsQueryDto } from './dto/register-students.dto';
 import { CommonStudentsResponseDto, CommonStudentsQueryDto } from './dto/common-students.dto';
 import { Request } from 'express';
 import { isArray } from 'class-validator';
+import { SuspendStudentDto } from './dto/suspend-student.dto';
 
 @Controller('api')
 export class ApiController {
@@ -31,5 +32,11 @@ export class ApiController {
     let response = new CommonStudentsResponseDto();
     response.students = await this.apiService.findCommonStudents(teachers);
     return response;
+  }
+
+  @Post('suspend')
+  @HttpCode(204)
+  async suspendStudent(@Body() suspendStudentDto: SuspendStudentDto) {
+    await this.apiService.suspendStudent(suspendStudentDto.student);
   }
 }

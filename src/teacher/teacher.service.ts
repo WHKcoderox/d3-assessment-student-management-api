@@ -18,7 +18,10 @@ export class TeacherService {
     let acc: string[][] = teacherEmails.map(() => []);
     try {
       // assumption: not an excessive number of teachers (>10) is typically queried
-      await Promise.all(teacherEmails.map(async (teacher, idx) => 
+      await Promise.all(teacherEmails.map(async (teacher, idx) => {
+        let teacherExists = await queryRunner.manager
+      .getRepository(Teacher).exists({where: {email: teacher}});
+        if (!teacherExists) throw new Error();
         acc[idx] = await queryRunner.manager
           .createQueryBuilder()
           .relation(Teacher, "students")
@@ -27,15 +30,14 @@ export class TeacherService {
           .then(
             students => students.map(student => student.email)
           )
-      ));
+      }));
       for (let i = 1; i < acc.length; i++) {
         acc[0] = acc[0].filter(email => acc[i].includes(email));
       }
       return acc[0];
     } catch (e) {
       throw new BadRequestException({
-        'message': 'Failed to query students registered under teachers. \
-        Check that the database is configured correctly.'
+        'message': 'Failed to query students registered under teachers. Check that the email(s) were spelled correctly and the database is configured correctly.'
       });
     } finally {
       await queryRunner.release();

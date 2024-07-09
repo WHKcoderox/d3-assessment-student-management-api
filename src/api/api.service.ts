@@ -19,4 +19,7 @@ export class ApiService {
   async findCommonStudents(teacherEmails: string[]): Promise<string[]> {
     return await this.teacherService.studentsRegisteredToTeachers(teacherEmails);
   }
+  async suspendStudent(student: string) {
+    await this.studentService.suspendStudent(student);
+  }
 }

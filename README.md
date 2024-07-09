@@ -43,6 +43,7 @@ $ npm install
 
 ## Running the app
 
+Before testing the app, make sure .env.test.local and .env.development.local files are set up following the .env.example format. Make sure to provide a test database to run the tests mentioned later, else significant unwanted changes might happen.
 ```bash
 # development
 $ npm run start

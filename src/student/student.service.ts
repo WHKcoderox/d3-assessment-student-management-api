@@ -2,7 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { Student } from './student.entity';
 import { DataSource, In } from 'typeorm';
-const emailRegexSafe = require('email-regex-safe');
+import emailRegexSafe = require('email-regex-safe');
 
 @Injectable()
 export class StudentService {
@@ -19,14 +19,15 @@ export class StudentService {
       await queryRunner.startTransaction();
       await queryRunner.manager
         .createQueryBuilder()
-        .relation(Student, "teachers")
+        .relation(Student, 'teachers')
         .of(studentEmails)
         .add(teacherEmail);
       await queryRunner.commitTransaction();
-    } catch(e) {
+    } catch (e) {
       await queryRunner.rollbackTransaction();
       throw new BadRequestException({
-        'message': 'Failed to register students. Check that the emails provided are valid and present in the database and that the students have not already been registered to the teachers.'
+        message:
+          'Failed to register students. Check that the emails provided are valid and present in the database and that the students have not already been registered to the teachers.',
       });
     } finally {
       await queryRunner.release();
@@ -39,20 +40,21 @@ export class StudentService {
       await queryRunner.connect();
       await queryRunner.startTransaction();
       // since update does not check if the student exists, manually add one more query
-      let validStudent = await queryRunner.manager
+      const validStudent = await queryRunner.manager
         .getRepository(Student)
-        .exists({where: {email: student}});
+        .exists({ where: { email: student } });
       if (!validStudent) {
         throw new Error();
       }
       await queryRunner.manager
         .getRepository(Student)
-        .update(student, { suspended : true });
+        .update(student, { suspended: true });
       await queryRunner.commitTransaction();
-    } catch(e) {
+    } catch (e) {
       await queryRunner.rollbackTransaction();
       throw new BadRequestException({
-        'message': 'Failed to suspend student. Check that the email provided is valid and present in the database.'
+        message:
+          'Failed to suspend student. Check that the email provided is valid and present in the database.',
       });
     } finally {
       await queryRunner.release();
@@ -60,7 +62,7 @@ export class StudentService {
   }
 
   async getStudentsMentioned(notification: string): Promise<string[]> {
-    let matches = [];
+    const matches = [];
     const regex = emailRegexSafe();
     let match;
     // for all emails, get the @ mentions
@@ -70,25 +72,25 @@ export class StudentService {
         matches.push(match[0]);
       }
     }
-    
+
     let studentsFound: Student[];
     const queryRunner = this.dataSource.createQueryRunner();
     try {
       await queryRunner.connect();
       studentsFound = await queryRunner.manager
         .getRepository(Student)
-        .find({where: {email: In(matches)}});
-    } catch(e) {
-      console.log(e);
+        .find({ where: { email: In(matches) } });
+    } catch (e) {
       throw new BadRequestException({
-        'message': 'Failed to retrieve students. Check that the database is correctly configured.'
+        message:
+          'Failed to retrieve students. Check that the database is correctly configured.',
       });
     } finally {
       await queryRunner.release();
     }
     // filter out suspended students
     return studentsFound
-      .filter(student => !student.suspended)
-      .map(student => student.email);
+      .filter((student) => !student.suspended)
+      .map((student) => student.email);
   }
 }

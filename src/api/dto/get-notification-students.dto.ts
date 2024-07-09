@@ -1,4 +1,4 @@
-import { IsEmail } from "class-validator";
+import { IsEmail } from 'class-validator';
 
 export class GetNotificationStudentsRequestDto {
   @IsEmail()
@@ -7,6 +7,5 @@ export class GetNotificationStudentsRequestDto {
 }
 
 export class GetNotificationStudentsResponseDto {
-  @IsEmail({}, {each: true})
   recipients: string[];
 }

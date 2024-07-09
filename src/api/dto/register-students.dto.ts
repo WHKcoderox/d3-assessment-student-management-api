@@ -1,8 +1,8 @@
-import { IsEmail } from "class-validator";
+import { IsEmail } from 'class-validator';
 
-export class RegisterStudentsQueryDto {
+export class RegisterStudentsRequestDto {
   @IsEmail()
   teacher: string;
-  @IsEmail({}, {each: true})
+  @IsEmail({}, { each: true })
   students: string[];
-};
+}

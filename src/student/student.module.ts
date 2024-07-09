@@ -5,10 +5,7 @@ import { StudentService } from './student.service';
 import { Repository } from 'typeorm';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Student]),
-    Repository
-  ],
-  providers: [StudentService]
+  imports: [TypeOrmModule.forFeature([Student]), Repository],
+  providers: [StudentService],
 })
 export class StudentModule {}

@@ -1,6 +1,5 @@
-import { Column, Entity, JoinColumn, ManyToMany, PrimaryColumn } from "typeorm";
-import type { Teacher } from "src/teacher/teacher.entity";
-
+import { Column, Entity, ManyToMany, PrimaryColumn } from 'typeorm';
+import type { Teacher } from 'src/teacher/teacher.entity';
 
 @Entity()
 export class Student {
@@ -10,7 +9,7 @@ export class Student {
   @Column()
   suspended: boolean;
 
-  @ManyToMany("Teacher", (teacher: Teacher) => teacher.students, {
+  @ManyToMany('Teacher', (teacher: Teacher) => teacher.students, {
     onDelete: 'CASCADE',
   })
   teachers: Teacher[];

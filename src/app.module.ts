@@ -32,7 +32,7 @@ const ENV = process.env.NODE_ENV;
         database: configService.get('TYPEORM_DATABASE'),
         entities: [Teacher, Student],
         synchronize: configService.get('TYPEORM_SYNCHRONIZE') === 'true',
-      })
+      }),
     }),
     ApiModule,
     StudentModule,

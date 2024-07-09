@@ -1,4 +1,4 @@
-import { Teacher } from "../src/teacher/teacher.entity";
+import { Teacher } from '../src/teacher/teacher.entity';
 
 export class TeacherFactory {
   static currentId: number = 0;
@@ -9,7 +9,7 @@ export class TeacherFactory {
 
   static createTeacher(): Teacher {
     this.currentId += 1;
-    let teacher = new Teacher();
+    const teacher = new Teacher();
     teacher.email = `t${this.currentId}@test.com`;
     teacher.students = [];
     return teacher;

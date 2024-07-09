@@ -7,11 +7,8 @@ import { StudentService } from '../student/student.service';
 import { TeacherService } from '../teacher/teacher.service';
 
 @Module({
-  imports: [
-    TeacherModule,
-    StudentModule
-  ],
+  imports: [TeacherModule, StudentModule],
   controllers: [ApiController],
-  providers: [ApiService, StudentService, TeacherService]
+  providers: [ApiService, StudentService, TeacherService],
 })
 export class ApiModule {}

@@ -1,6 +1,6 @@
-import { IsEmail } from "class-validator";
+import { IsEmail } from 'class-validator';
 
-export class SuspendStudentDto {
+export class SuspendStudentRequestDto {
   @IsEmail()
-  student: string
+  student: string;
 }

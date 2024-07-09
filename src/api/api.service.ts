@@ -15,4 +15,8 @@ export class ApiService {
       studentEmails
     );
   }
+
+  async findCommonStudents(teacherEmails: string[]): Promise<string[]> {
+    return await this.teacherService.studentsRegisteredToTeachers(teacherEmails);
+  }
 }

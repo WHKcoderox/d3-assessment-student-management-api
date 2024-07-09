@@ -35,21 +35,4 @@ export class StudentService {
       await queryRunner.release();
     }
   }
-
-  // Obtains a list of students registered to all teachers.
-  async studentsRegisteredToTeachers(teacherEmails: string[]): Promise<Student[]> {
-    const queryRunner = this.dataSource.createQueryRunner();
-    await queryRunner.connect();
-    try {
-      return await queryRunner.manager
-        .getRepository(Student)
-        .findBy({
-          teachers: ArrayContains(teacherEmails)
-        });
-    } catch (e) {
-      throw new BadRequestException('Failed to query students registered under teachers.');
-    } finally {
-      await queryRunner.release();
-    }
-  }
 }

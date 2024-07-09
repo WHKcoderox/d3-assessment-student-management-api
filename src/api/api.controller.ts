@@ -1,6 +1,9 @@
-import { Body, Controller, Get, HttpCode, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Param, Post, Query, Req, UsePipes, ValidationPipe } from '@nestjs/common';
 import { ApiService } from './api.service';
-import { RegisterStudentsDto } from './dto/register-students.dto';
+import { RegisterStudentsQueryDto } from './dto/register-students.dto';
+import { CommonStudentsResponseDto, CommonStudentsQueryDto } from './dto/common-students.dto';
+import { Request } from 'express';
+import { isArray } from 'class-validator';
 
 @Controller('api')
 export class ApiController {
@@ -10,7 +13,7 @@ export class ApiController {
 
   @Post('register')
   @HttpCode(204)
-  async registerStudents(@Body() registerStudentsDto: RegisterStudentsDto): Promise<string> {
+  async registerStudents(@Body() registerStudentsDto: RegisterStudentsQueryDto): Promise<string> {
     await this.apiService.registerStudents(
       registerStudentsDto.teacher, 
       registerStudentsDto.students
@@ -20,7 +23,13 @@ export class ApiController {
   }
 
   @Get('commonstudents')
-  getCommonStudents(): any {
-    return {};
+  async getCommonStudents(@Query('teacher') teachers: string[]): Promise<CommonStudentsResponseDto> {
+    if (!isArray(teachers)) {
+      // class-validator does not auto-transform query...
+      teachers = [teachers];
+    }
+    let response = new CommonStudentsResponseDto();
+    response.students = await this.apiService.findCommonStudents(teachers);
+    return response;
   }
 }

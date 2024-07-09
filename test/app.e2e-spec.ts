@@ -14,7 +14,6 @@ describe('AppController (e2e)', () => {
   let app: INestApplication;
   let moduleFixture: TestingModule;
   let dataSource: DataSource;
-  let count = 0;
 
   beforeEach(async () => {
     moduleFixture = await Test.createTestingModule({
@@ -41,21 +40,22 @@ describe('AppController (e2e)', () => {
       // saving students first, so store the relation under teachers local entity
       teachers[1].students.push(students[i]);
     }
+    // register 2 students to teacher 3
+    for (let i = 0; i < 2; i++) {
+      teachers[2].students.push(students[i]);
+    }
     // add test data
     let runner = dataSource.createQueryRunner();
     try {
-      count += 1;
-      console.log(`count: ${count}`);
       await runner.connect();
       await runner.startTransaction();
       await Promise.all(
-        students.map(async (student) => await runner.manager.save(student))
+        students.map((student) => runner.manager.save(student))
       );
       await Promise.all(
-        teachers.map(async (teacher) => await runner.manager.save(teacher))
+        teachers.map((teacher) => runner.manager.save(teacher))
       );
       await runner.commitTransaction();
-      console.log("Seeded database");
     } catch (e) {
       await runner.rollbackTransaction();
       throw new Error(`Seeding database gave error: ${e}`);
@@ -78,15 +78,11 @@ describe('AppController (e2e)', () => {
       ));
       await runner.query('SET FOREIGN_KEY_CHECKS = 1;');
       await runner.commitTransaction();
-      console.log("Cleaned database");
     } catch (e) {
       await runner.rollbackTransaction();
       throw new Error(`Cleaning database gave the error: ${e}`);
     } finally {
-      // Jest can't exit or something...
-      // await dataSource.destroy();
       await runner.release();
-      console.log("Closed connection");
     }
   });
 
@@ -137,6 +133,56 @@ describe('AppController (e2e)', () => {
         .then(response => 
           expect(response.body).toHaveProperty('message')
         );
+    });
+  });
+
+  describe('/api/commonstudents (GET)', () => {
+    it('Gives all students registered under one teacher', () => {
+      return request(app.getHttpServer())
+        .get('/api/commonstudents?teacher=t2%40test.com')
+        .send()
+        .set('Content-Type', 'application/json')
+        .expect(200)
+        .then(response => {
+          expect(response.body).toHaveProperty('students');
+          expect(response.body['students']).toHaveLength(3);
+        });
+    });
+
+    it('Gives all students registered under two teachers', () => {
+      return request(app.getHttpServer())
+        .get('/api/commonstudents?teacher=t2%40test.com&teacher=t3%40test.com')
+        .send()
+        .set('Content-Type', 'application/json')
+        .expect(200)
+        .then(response => {
+          expect(response.body).toHaveProperty('students');
+          expect(response.body['students']).toHaveLength(2);
+        });
+    });
+
+    it('Gives no students when queried teachers do not share students', () => {
+      return request(app.getHttpServer())
+        .get('/api/commonstudents?teacher=t1%40test.com&teacher=t2%40test.com&teacher=t3%40test.com')
+        .send()
+        .set('Content-Type', 'application/json')
+        .expect(200)
+        .then(response => {
+          expect(response.body).toHaveProperty('students');
+          expect(response.body['students']).toHaveLength(0);
+        });
+    });
+
+    it('Gives no students when queried teacher does not exist', () => {
+      return request(app.getHttpServer())
+        .get('/api/commonstudents?teacher=t0%40test.com')
+        .send()
+        .set('Content-Type', 'application/json')
+        .expect(200)
+        .then(response => {
+          expect(response.body).toHaveProperty('students');
+          expect(response.body['students']).toHaveLength(0);
+        });
     });
   });
 });

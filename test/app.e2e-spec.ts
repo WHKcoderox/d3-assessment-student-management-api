@@ -28,6 +28,8 @@ describe('AppController (e2e)', () => {
       teachers.push(TeacherFactory.createTeacher());
     }
 
+    // suspend student 5
+    students[4].suspended = true;
     // register 3 students to teacher 2
     for (let i = 0; i < 3; i++) {
       // saving students first, so store the relation under teachers local entity
@@ -140,6 +142,45 @@ describe('AppController (e2e)', () => {
     });
   });
 
+  describe('/api/unregister (POST)', () => {
+    it('Successfully unregisters when students are already registered', () => {
+      return request(app.getHttpServer())
+        .post('/api/unregister')
+        .send({
+          teacher: 't2@test.com',
+          students: ['s1@test.com', 's2@test.com'],
+        })
+        .set('Content-Type', 'application/json')
+        .expect(204);
+    });
+
+    it('Ignores unregistration duplication', () => {
+      return request(app.getHttpServer())
+        .post('/api/unregister')
+        .send({ teacher: 't1@test.com', students: ['s1@test.com'] })
+        .set('Content-Type', 'application/json')
+        .expect(204);
+    });
+
+    it('Fails unregistration when student emails are not found', () => {
+      return request(app.getHttpServer())
+        .post('/api/unregister')
+        .send({ teacher: 't1@test.com', students: ['s0@test.com'] })
+        .set('Content-Type', 'application/json')
+        .expect(400)
+        .then((response) => expect(response.body).toHaveProperty('message'));
+    });
+
+    it('Fails unregistration when teacher emails are not found', () => {
+      return request(app.getHttpServer())
+        .post('/api/unregister')
+        .send({ teacher: 't0@test.com', students: ['s1@test.com'] })
+        .set('Content-Type', 'application/json')
+        .expect(400)
+        .then((response) => expect(response.body).toHaveProperty('message'));
+    });
+  });
+
   describe('/api/commonstudents (GET)', () => {
     it('Gives all students registered under one teacher', () => {
       return request(app.getHttpServer())
@@ -217,6 +258,27 @@ describe('AppController (e2e)', () => {
     });
   });
 
+  describe('/api/unsuspend (POST)', () => {
+    it('Successfully unsuspends student', () => {
+      return request(app.getHttpServer())
+        .post('/api/unsuspend')
+        .send({ student: ['s5@test.com'] })
+        .set('Content-Type', 'application/json')
+        .expect(204);
+    });
+
+    it('Fails to unsuspend nonexistent student', () => {
+      return request(app.getHttpServer())
+        .post('/api/unsuspend')
+        .send({ student: ['s0@test.com'] })
+        .set('Content-Type', 'application/json')
+        .expect(400)
+        .then((response) => {
+          expect(response.body).toHaveProperty('message');
+        });
+    });
+  });
+
   describe('/api/retrievefornotifications (POST)', () => {
     it('Retrieves list of registered students', () => {
       return request(app.getHttpServer())
@@ -266,6 +328,21 @@ describe('AppController (e2e)', () => {
           expect(response.body['recipients']).toContain(students[1].email);
           expect(response.body['recipients']).toContain(students[2].email);
           expect(response.body['recipients']).toContain(students[3].email);
+        });
+    });
+
+    it('Ignores suspended students', () => {
+      return request(app.getHttpServer())
+        .post('/api/retrievefornotifications')
+        .send({
+          teacher: 't1@test.com',
+          notification: 'blabla @s5@test.com',
+        })
+        .set('Content-Type', 'application/json')
+        .expect(200)
+        .then((response) => {
+          expect(response.body).toHaveProperty('recipients');
+          expect(response.body['recipients']).toHaveLength(0);
         });
     });
 

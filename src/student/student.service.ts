@@ -3,6 +3,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { Student } from './student.entity';
 import { DataSource, In } from 'typeorm';
 import emailRegexSafe = require('email-regex-safe');
+import { Teacher } from '../teacher/teacher.entity';
 
 @Injectable()
 export class StudentService {
@@ -11,30 +12,45 @@ export class StudentService {
     private dataSource: DataSource,
   ) {}
 
-  // Registers list of students specified by their emails to a teacher.
-  async registerToTeacher(teacherEmail: string, studentEmails: string[]) {
+  // Registers/unregisters list of students specified by their emails to a teacher.
+  async setRegistrationToTeacher(
+    teacherEmail: string,
+    studentEmails: string[],
+    register = true,
+  ) {
     const queryRunner = this.dataSource.createQueryRunner();
     try {
       await queryRunner.connect();
       await queryRunner.startTransaction();
-      await queryRunner.manager
+      const teacherExists = await queryRunner.manager
+        .getRepository(Teacher)
+        .exists({ where: { email: teacherEmail } });
+      if (!teacherExists) throw new Error();
+      const studentsCount = await queryRunner.manager
+        .getRepository(Student)
+        .count({ where: { email: In(studentEmails) } });
+      if (studentsCount !== new Set(studentEmails).size) throw new Error();
+      const qb = queryRunner.manager
         .createQueryBuilder()
         .relation(Student, 'teachers')
-        .of(studentEmails)
-        .add(teacherEmail);
+        .of(studentEmails);
+      if (register) {
+        await qb.add(teacherEmail);
+      } else {
+        await qb.remove(teacherEmail);
+      }
       await queryRunner.commitTransaction();
     } catch (e) {
       await queryRunner.rollbackTransaction();
       throw new BadRequestException({
-        message:
-          'Failed to register students. Check that the emails provided are valid and present in the database and that the students have not already been registered to the teachers.',
+        message: `Failed to ${register ? '' : 'un'}register students. Check that the emails provided are valid and present in the database and that the students have not already been registered to the teachers.`,
       });
     } finally {
       await queryRunner.release();
     }
   }
 
-  async suspendStudent(student: string) {
+  async setStudentSuspendStatus(student: string, suspend: boolean = true) {
     const queryRunner = this.dataSource.createQueryRunner();
     try {
       await queryRunner.connect();
@@ -48,7 +64,7 @@ export class StudentService {
       }
       await queryRunner.manager
         .getRepository(Student)
-        .update(student, { suspended: true });
+        .update(student, { suspended: suspend });
       await queryRunner.commitTransaction();
     } catch (e) {
       await queryRunner.rollbackTransaction();

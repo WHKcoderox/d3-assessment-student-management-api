@@ -18,9 +18,21 @@ export class ApiController {
   async registerStudents(
     @Body() registerStudentsDto: RegisterStudentsRequestDto,
   ) {
-    await this.apiService.registerStudents(
+    await this.apiService.setStudentsRegistration(
       registerStudentsDto.teacher,
       registerStudentsDto.students,
+    );
+  }
+
+  @Post('unregister')
+  @HttpCode(204)
+  async unregisterStudents(
+    @Body() registerStudentsDto: RegisterStudentsRequestDto,
+  ) {
+    await this.apiService.setStudentsRegistration(
+      registerStudentsDto.teacher,
+      registerStudentsDto.students,
+      false,
     );
   }
 
@@ -41,6 +53,12 @@ export class ApiController {
   @HttpCode(204)
   async suspendStudent(@Body() suspendStudentDto: SuspendStudentRequestDto) {
     await this.apiService.suspendStudent(suspendStudentDto.student);
+  }
+
+  @Post('unsuspend')
+  @HttpCode(204)
+  async unsuspendStudent(@Body() suspendStudentDto: SuspendStudentRequestDto) {
+    await this.apiService.unsuspendStudent(suspendStudentDto.student);
   }
 
   @Post('retrievefornotifications')

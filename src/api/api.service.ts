@@ -9,8 +9,16 @@ export class ApiService {
     private readonly teacherService: TeacherService,
   ) {}
 
-  async registerStudents(teacherEmail: string, studentEmails: string[]) {
-    await this.studentService.registerToTeacher(teacherEmail, studentEmails);
+  async setStudentsRegistration(
+    teacherEmail: string,
+    studentEmails: string[],
+    register: boolean = true,
+  ) {
+    await this.studentService.setRegistrationToTeacher(
+      teacherEmail,
+      studentEmails,
+      register,
+    );
   }
 
   async findCommonStudents(teacherEmails: string[]): Promise<string[]> {
@@ -20,7 +28,11 @@ export class ApiService {
   }
 
   async suspendStudent(student: string) {
-    await this.studentService.suspendStudent(student);
+    await this.studentService.setStudentSuspendStatus(student);
+  }
+
+  async unsuspendStudent(student: string) {
+    await this.studentService.setStudentSuspendStatus(student, false);
   }
 
   async getStudentsToNotify(
